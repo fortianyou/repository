@@ -21,7 +21,7 @@ public class WXParserHtmlCleaner extends WXParser{
 	 * WXParserHtmlParser构造函数
 	 * @param _wxMsgFilePath 输入的微信消息路径
 	 */
-	protected WXParserHtmlCleaner(String _wxMsgFilePath,String charset){
+	public WXParserHtmlCleaner(String _wxMsgFilePath,String charset){
 		super(_wxMsgFilePath, charset);
 	}
 

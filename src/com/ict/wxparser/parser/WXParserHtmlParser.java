@@ -13,7 +13,7 @@ public class WXParserHtmlParser extends WXParser{
 	 * WXParserHtmlParser构造函数
 	 * @param _wxMsgFilePath 输入的微信消息路径
 	 */
-	protected WXParserHtmlParser(String wxMsgFilePath,String charset){
+	public WXParserHtmlParser(String wxMsgFilePath,String charset){
 		super(wxMsgFilePath,charset);
 	}
 
