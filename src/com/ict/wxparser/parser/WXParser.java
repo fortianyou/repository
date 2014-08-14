@@ -69,17 +69,26 @@ public abstract class WXParser {
 	 * 获取下一条微信消息
 	 * @return
 	 * @throws IOException 
+	 * @throws Exception 
 	 */
 	public WxMsgItem getNextWxMsgItem() throws IOException{
 		if(reader == null){
 			throw new IOException("WXparser hasn't been init");
 		}
 		String line = reader.getNextLine();
+		WxMsgItem item = null;
 		if( line == null ){
 			reader.closeStream();
 			return null;
 		}
-		return parseLine(line);
+		try {
+			item = parseLine(line);
+			return item;
+		} catch (Exception e) {
+			logger.info(e.getMessage() + ", read next line",e);
+			return getNextWxMsgItem();
+		}
+		
 	}
 	
 	
@@ -87,9 +96,20 @@ public abstract class WXParser {
 	 * 解析所读取到的行
 	 * @param line
 	 * @return
+	 * @throws Exception 
 	 */
-	public WxMsgItem parseLine(String line){
-		int msgType = Integer.parseInt(getValue("^.*\"MsgType\".*([0-9]+).*$", line).get(0));
+	public WxMsgItem parseLine(String line) throws Exception{
+		//由于最开始line太长且不规则，使用正则表示似乎会出错，所以暂不使用
+		//List<String > lists = getValue("^.*\"MsgType\":([0-9]+).*$", line);
+		int lidx , ridx;
+		lidx = line.indexOf("\"MsgType\"");
+		lidx = line.indexOf(":",lidx + 1);
+		if(lidx == -1)
+			throw new Exception("Malformed WxMsg");
+		ridx = line.indexOf(",",lidx + 1);
+		if(ridx == -1)
+			throw new Exception("Malformed WxMsg");
+		int msgType = Integer.parseInt( line.substring(lidx + 1,ridx).trim());
 		WxMsgItem item = null;
 		if(msgType == 1){
 			line = line.replace("\\\\\\", "");
@@ -97,8 +117,8 @@ public abstract class WXParser {
 			txtItem.setContent( getValue("^.*\"TxtContent\"\\s*:\\s*\"([^\"]*)\".*$", line).get(0));
 			item = txtItem;
 		}else{// if(msgType == 49){
-			int lidx = line.indexOf("[");
-			int ridx = line.lastIndexOf("]");
+			lidx = line.indexOf("[");
+			ridx = line.lastIndexOf("]");
 			
 			String contentString = line.substring(lidx + 1, ridx);
 			lidx = line.lastIndexOf("Content", lidx);
@@ -202,17 +222,6 @@ public abstract class WXParser {
 	}
 	
 	
-	public static void main(String []args) throws IOException{
-		WXParser wxParser = new WXParserHtmlCleaner("C:/Users/Administrator/Desktop/仲由Run/data/pa00", "utf-8");
-		wxParser.init();
-		WxMsgItem item = null;
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter
-				(new FileOutputStream("C:/Users/Administrator/Desktop/仲由Run/data/pa00.trans"),"utf-8"));
-		while( ( item = wxParser.getNextWxMsgItem())!= null ){
-			writer.append(item.toDocument());
-		}
 
-		writer.close();
-	}
 	
 }

@@ -22,7 +22,7 @@ public class WxMsgHtmlItemContentItem {
 		this.postDateString = postDateString;
 	}
 	public String getContentString() {
-		return contentString;
+		return contentString ;
 	}
 	public void setContentString(String contentString) {
 		this.contentString = contentString;

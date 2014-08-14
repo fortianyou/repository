@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.log4j.Logger;
+
 import com.ict.wxparser.parser.WXParser;
 import com.ict.wxparser.parser.WXParserHtmlCleaner;
 import com.ict.wxparser.wxmsg.WxMsgItem;
@@ -17,7 +19,7 @@ import com.ict.wxparser.wxmsg.WxMsgItem;
  *
  */
 public class WXMsgToDocument {
-
+	private static Logger logger = Logger.getLogger(WXMsgToDocument.class);
 	private String inFilename;
 	private String outFilename;
 	private String charset;
@@ -29,9 +31,11 @@ public class WXMsgToDocument {
 
 	/**
 	 * 输出指定格式的文本到指定文件
+	 * @throws FileNotFoundException 
+	 * @throws UnsupportedEncodingException 
 	 * @throws IOException
 	 */
-	public void transToDocument() throws IOException{
+	public void transToDocument() throws UnsupportedEncodingException, FileNotFoundException{
 		WXParser wxParser = new WXParserHtmlCleaner(inFilename,charset);
 		wxParser.init();
 		WxMsgItem item = null;
@@ -40,10 +44,25 @@ public class WXMsgToDocument {
 		writer = new BufferedWriter(new OutputStreamWriter
 				(new FileOutputStream(outFilename),charset));
 	
-		while( ( item = wxParser.getNextWxMsgItem())!= null ){
-			writer.append(item.toDocument());
+		try {
+			while( ( item = wxParser.getNextWxMsgItem())!= null ){
+				writer.append(item.toDocument());
+			}
+		} catch (IOException e) {
+			logger.error(e.getMessage()+", close BufferedWriter",e);
+			try {
+				writer.close();
+			} catch (IOException e1) {
+				logger.error(e.getMessage(),e);
+			}
 		}
 
-		writer.close();
+		
+	}
+	
+	public static void main(String []args) throws IOException{
+		WXMsgToDocument d = new WXMsgToDocument("C:/Users/Administrator/Desktop/仲由Run/data/file", "C:/Users/Administrator/Desktop/仲由Run/data/file.trans", "UTF-8");
+		d.transToDocument();
+
 	}
 }

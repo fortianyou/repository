@@ -1,7 +1,7 @@
 package com.ict.wxparser.wxmsg;
 
 /**
- * MsgType = 1，纯文本微信内容
+ * 微信消息：MsgType = 1，纯文本微信内容
  * @author Administrator
  *
  */

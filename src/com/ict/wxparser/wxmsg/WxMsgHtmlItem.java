@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MsgType = 3、34、43、49，图片、语音、视频、图文等微信消息内容
+ * 微信消息：MsgType = 3、34、43、49，图片、语音、视频、图文等微信消息内容
  * @author Administrator
  *
  */
@@ -32,6 +32,7 @@ public class WxMsgHtmlItem extends WxMsgItem{
 		domHead += "WxId="+getWxId() +" SendTime="+getSendTime() + " MsgType="+getMsgType();
 		for(WxMsgHtmlItemContent cnt : content ){
 			WxMsgHtmlItemContentItem itm = cnt.getTxtContent();
+			if(itm == null ) continue;
 			String cntString =  itm.getContentString();
 			if(  cntString == null || cntString.equals("") )
 				continue;
