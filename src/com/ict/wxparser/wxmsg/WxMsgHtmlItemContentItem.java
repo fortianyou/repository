@@ -1,6 +1,10 @@
 package com.ict.wxparser.wxmsg;
-
-public class WxMsgHtmlContentItem {
+/**
+ * 微信消息内容项
+ * @author Administrator
+ *
+ */
+public class WxMsgHtmlItemContentItem {
 	private String titleString;
 	private String postDateString;
 	private String contentString;

@@ -11,6 +11,11 @@ import com.ict.wxparser.parser.WXParser;
 import com.ict.wxparser.parser.WXParserHtmlCleaner;
 import com.ict.wxparser.wxmsg.WxMsgItem;
 
+/**
+ * 对一个WxMsg文件进行分析，并输出指定格式的文本到指定文件
+ * @author Administrator
+ *
+ */
 public class WXMsgToDocument {
 
 	private String inFilename;
@@ -22,6 +27,10 @@ public class WXMsgToDocument {
 		this.charset = charset;
 	}
 
+	/**
+	 * 输出指定格式的文本到指定文件
+	 * @throws IOException
+	 */
 	public void transToDocument() throws IOException{
 		WXParser wxParser = new WXParserHtmlCleaner(inFilename,charset);
 		wxParser.init();

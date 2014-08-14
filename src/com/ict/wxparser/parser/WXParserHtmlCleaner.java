@@ -10,8 +10,12 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
 import com.ict.wxparser.util.FileReader;
-import com.ict.wxparser.wxmsg.WxMsgHtmlContentItem;
-
+import com.ict.wxparser.wxmsg.WxMsgHtmlItemContentItem;
+/**
+ * 采用HtmlCleaner的微信内容解析器
+ * @author Administrator
+ *
+ */
 public class WXParserHtmlCleaner extends WXParser{
 	
 	private static Logger logger = Logger.getLogger(WXParserHtmlCleaner.class);
@@ -26,8 +30,8 @@ public class WXParserHtmlCleaner extends WXParser{
 	}
 
 	@Override
-	protected  WxMsgHtmlContentItem getWxMsgContentItem(String html) {
-		WxMsgHtmlContentItem item = new WxMsgHtmlContentItem();
+	protected  WxMsgHtmlItemContentItem getWxMsgContentItem(String html) {
+		WxMsgHtmlItemContentItem item = new WxMsgHtmlItemContentItem();
 		TagNode dom = cleaner.clean(html);
 		TagNode [] nodes = dom.getElementsByAttValue("id","page-content", true, true);
 		if(nodes == null || nodes.length == 0){

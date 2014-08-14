@@ -1,6 +1,10 @@
 package com.ict.wxparser.wxmsg;
 
-
+/**
+ * Î¢ĞÅÏûÏ¢
+ * @author Administrator
+ *
+ */
 public abstract class WxMsgItem {
 
 	protected String wxId;

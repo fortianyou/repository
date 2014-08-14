@@ -1,13 +1,17 @@
 package com.ict.wxparser.wxmsg;
 
 import java.util.List;
-
-public class WxMsgHtmlContent {
+/**
+ * Î¢ÐÅÏûÏ¢ÄÚÈÝ£ºÍ¼¡¢ÊÓÆµ¡¢ÒôÆµ¡¢Í¼ÎÄ
+ * @author Administrator
+ *
+ */
+public class WxMsgHtmlItemContent {
 	private String title;
 	private String Abstract;
 	private String articleUrl;
 	private String mediaUrl;
-	private WxMsgHtmlContentItem txtContent;
+	private WxMsgHtmlItemContentItem txtContent;
 	private String txtContentHtmlString;
 	private String txtFile;
 	public String getTitle() {
@@ -34,10 +38,10 @@ public class WxMsgHtmlContent {
 	public void setMediaUrl(String mediaUrl) {
 		this.mediaUrl = mediaUrl;
 	}
-	public WxMsgHtmlContentItem getTxtContent() {
+	public WxMsgHtmlItemContentItem getTxtContent() {
 		return txtContent;
 	}
-	public void setTxtContent(WxMsgHtmlContentItem txtContent) {
+	public void setTxtContent(WxMsgHtmlItemContentItem txtContent) {
 		this.txtContent = txtContent;
 	}
 	public String getTxtFile() {

@@ -14,12 +14,16 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import com.ict.wxparser.util.FileReader;
-import com.ict.wxparser.wxmsg.WxMsgHtmlContent;
-import com.ict.wxparser.wxmsg.WxMsgHtmlContentItem;
+import com.ict.wxparser.wxmsg.WxMsgHtmlItemContent;
+import com.ict.wxparser.wxmsg.WxMsgHtmlItemContentItem;
 import com.ict.wxparser.wxmsg.WxMsgHtmlItem;
 import com.ict.wxparser.wxmsg.WxMsgItem;
 import com.ict.wxparser.wxmsg.WxMsgTextItem;
-
+/**
+ * 微信文件解析器
+ * @author Administrator
+ *
+ */
 public abstract class WXParser {
 	
 	private static Logger logger = Logger.getLogger(WXParser.class);
@@ -101,7 +105,7 @@ public abstract class WXParser {
 			line = line.substring(0, lidx) + line.substring(ridx + 1);
 			logger.info("The new line is: " + line) ;
 			WxMsgHtmlItem htmlItem = new WxMsgHtmlItem();
-			List<WxMsgHtmlContent> list = getMsgContent(contentString);
+			List<WxMsgHtmlItemContent> list = getMsgContent(contentString);
 			htmlItem.setContent( list);
 			item = htmlItem;
 		}
@@ -119,15 +123,15 @@ public abstract class WXParser {
 	 * @param contentString
 	 * @return
 	 */
-	protected List<WxMsgHtmlContent> getMsgContent(String contentString){
+	protected List<WxMsgHtmlItemContent> getMsgContent(String contentString){
 		
 		String htmlRegex = ".*\"TxtContent\":\"(.*<html.*</html\\s*>)\\s*\".*";
 		
 		Pattern p = Pattern.compile(htmlRegex);
 		Matcher m = p.matcher(contentString);
-		List<WxMsgHtmlContent> list = new ArrayList<WxMsgHtmlContent>();
+		List<WxMsgHtmlItemContent> list = new ArrayList<WxMsgHtmlItemContent>();
 		while(m.find()){
-			WxMsgHtmlContent item = new WxMsgHtmlContent();
+			WxMsgHtmlItemContent item = new WxMsgHtmlItemContent();
 			item.setTxtContentHtmlString( m.group(1).replace("\\\\\\", ""));
 			logger.info("Begin to analyze the html...");
 			item.setTxtContent(getWxMsgContentItem(item.getTxtContentHtmlString()));
@@ -135,7 +139,7 @@ public abstract class WXParser {
 			list.add(item);
 		}
 		
-		for(WxMsgHtmlContent item : list){
+		for(WxMsgHtmlItemContent item : list){
 			contentString = contentString.replace(item.getTxtContentHtmlString(), "");
 		}
 		
@@ -144,31 +148,31 @@ public abstract class WXParser {
 		List<String> valueStrings = getValue("^.*\"Title\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
 		int idx = 0;
 		for( String value: valueStrings){
-			WxMsgHtmlContent item = list.get(idx++);
+			WxMsgHtmlItemContent item = list.get(idx++);
 			item.setTitle(value.replace("\\\\\\#", "\""));
 		}
 		valueStrings = getValue("^.*\"Abstract\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
 		idx = 0;
 		for( String value: valueStrings){
-			WxMsgHtmlContent item = list.get(idx++);
+			WxMsgHtmlItemContent item = list.get(idx++);
 			item.setAbstract(value.replace("\\\\\\#", "\""));
 		}
 		valueStrings = getValue("^.*\"ArticleUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
 		idx = 0;
 		for( String value: valueStrings){
-			WxMsgHtmlContent item = list.get(idx++);
+			WxMsgHtmlItemContent item = list.get(idx++);
 			item.setArticleUrl(value.replace("\\\\\\#", "\""));
 		}
 		valueStrings = getValue("^.*\"MediaUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
 		idx = 0;
 		for( String value: valueStrings){
-			WxMsgHtmlContent item = list.get(idx++);
+			WxMsgHtmlItemContent item = list.get(idx++);
 			item.setMediaUrl(value.replace("\\\\\\#", "\""));
 		}
 		valueStrings = getValue("^.*\"TxtFile\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
 		idx = 0;
 		for( String value: valueStrings){
-			WxMsgHtmlContent item = list.get(idx++);
+			WxMsgHtmlItemContent item = list.get(idx++);
 			item.setTxtFile(value);
 		}
 		
@@ -180,7 +184,7 @@ public abstract class WXParser {
 	 * @param html
 	 * @return
 	 */
-	protected abstract WxMsgHtmlContentItem getWxMsgContentItem(String html);
+	protected abstract WxMsgHtmlItemContentItem getWxMsgContentItem(String html);
 	
 	/**
 	 * 使用正则表达是解析字串

@@ -3,12 +3,17 @@ package com.ict.wxparser.wxmsg;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * MsgType = 3¡¢34¡¢43¡¢49£¬Í¼Æ¬¡¢ÓïÒô¡¢ÊÓÆµ¡¢Í¼ÎÄµÈÎ¢ÐÅÏûÏ¢ÄÚÈÝ
+ * @author Administrator
+ *
+ */
 public class WxMsgHtmlItem extends WxMsgItem{
-	private List<WxMsgHtmlContent> content;
-	public List<WxMsgHtmlContent> getContent() {
-		return content==null?new ArrayList<WxMsgHtmlContent>(): content;
+	private List<WxMsgHtmlItemContent> content;
+	public List<WxMsgHtmlItemContent> getContent() {
+		return content==null?new ArrayList<WxMsgHtmlItemContent>(): content;
 	}
-	public void setContent(List<WxMsgHtmlContent> content) {
+	public void setContent(List<WxMsgHtmlItemContent> content) {
 		this.content = content;
 	}
 	
@@ -25,8 +30,8 @@ public class WxMsgHtmlItem extends WxMsgItem{
 		String retString = "";
 		String domHead ="<msg ";
 		domHead += "WxId="+getWxId() +" SendTime="+getSendTime() + " MsgType="+getMsgType();
-		for(WxMsgHtmlContent cnt : content ){
-			WxMsgHtmlContentItem itm = cnt.getTxtContent();
+		for(WxMsgHtmlItemContent cnt : content ){
+			WxMsgHtmlItemContentItem itm = cnt.getTxtContent();
 			String cntString =  itm.getContentString();
 			if(  cntString == null || cntString.equals("") )
 				continue;

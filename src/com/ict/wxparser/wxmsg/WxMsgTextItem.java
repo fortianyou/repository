@@ -1,5 +1,10 @@
 package com.ict.wxparser.wxmsg;
 
+/**
+ * MsgType = 1，纯文本微信内容
+ * @author Administrator
+ *
+ */
 public class WxMsgTextItem extends WxMsgItem{
 
 	private String content;
