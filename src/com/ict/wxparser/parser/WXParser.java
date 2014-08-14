@@ -1,6 +1,11 @@
 package com.ict.wxparser.parser;
 
+import java.awt.event.ItemEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -9,8 +14,11 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import com.ict.wxparser.util.FileReader;
-import com.ict.wxparser.wxmsg.WxMsgContentItem;
+import com.ict.wxparser.wxmsg.WxMsgHtmlContent;
+import com.ict.wxparser.wxmsg.WxMsgHtmlContentItem;
+import com.ict.wxparser.wxmsg.WxMsgHtmlItem;
 import com.ict.wxparser.wxmsg.WxMsgItem;
+import com.ict.wxparser.wxmsg.WxMsgTextItem;
 
 public abstract class WXParser {
 	
@@ -69,30 +77,40 @@ public abstract class WXParser {
 		}
 		return parseLine(line);
 	}
+	
+	
 	/**
 	 * 解析所读取到的行
 	 * @param line
 	 * @return
 	 */
 	public WxMsgItem parseLine(String line){
+		int msgType = Integer.parseInt(getValue("^.*\"MsgType\".*([0-9]+).*$", line).get(0));
+		WxMsgItem item = null;
+		if(msgType == 1){
+			line = line.replace("\\\\\\", "");
+			WxMsgTextItem txtItem = new WxMsgTextItem();
+			txtItem.setContent( getValue("^.*\"TxtContent\"\\s*:\\s*\"([^\"]*)\".*$", line).get(0));
+			item = txtItem;
+		}else{// if(msgType == 49){
+			int lidx = line.indexOf("[");
+			int ridx = line.lastIndexOf("]");
+			
+			String contentString = line.substring(lidx + 1, ridx);
+			lidx = line.lastIndexOf("Content", lidx);
+			line = line.substring(0, lidx) + line.substring(ridx + 1);
+			logger.info("The new line is: " + line) ;
+			WxMsgHtmlItem htmlItem = new WxMsgHtmlItem();
+			List<WxMsgHtmlContent> list = getMsgContent(contentString);
+			htmlItem.setContent( list);
+			item = htmlItem;
+		}
 		
-		int lidx = line.indexOf("[");
-		int ridx = line.lastIndexOf("]");
-		
-		String contentString = line.substring(lidx + 1, ridx);
-		lidx = line.lastIndexOf("Content", lidx);
-		line = line.substring(0, lidx) + line.substring(ridx + 1);
-		
-		logger.info("The new line is: " + line) ;
-		
-		WxMsgItem item = new WxMsgItem();
-		item.setContents( getMsgContent(contentString));
-		item.setWxId( getValue("^.*\"WxId\"\\s*:\\s*\"(.*)\".*$", line).get(0));
+		item.setWxId( getValue("^.*\"WxId\"\\s*:\\s*\"([^\"]*)\".*$", line).get(0));
 		item.setSendTime( Long.parseLong( getValue("^.*\"SendTime\".*([0-9]+).*$", line).get(0)));
-		item.setFansCount( Integer.parseInt( getValue("^.*\"FansCount\".*([0-9]+).*$", line).get(0)));
-		item.setMsgType( Integer.parseInt(getValue("^.*\"MsgType\".*([0-9]+).*$", line).get(0)));
+//		item.setFansCount( Integer.parseInt( getValue("^.*\"FansCount\".*([0-9]+).*$", line).get(0)));
+		item.setMsgType( msgType);
 		
-		logger.info(item);
 		return item;
 	}
 	
@@ -101,26 +119,68 @@ public abstract class WXParser {
 	 * @param contentString
 	 * @return
 	 */
-	protected List<WxMsgContentItem> getMsgContent(String contentString){
-		contentString = contentString.replace("\\\\\\", "");
+	protected List<WxMsgHtmlContent> getMsgContent(String contentString){
+		
 		String htmlRegex = ".*\"TxtContent\":\"(.*<html.*</html\\s*>)\\s*\".*";
 		
 		Pattern p = Pattern.compile(htmlRegex);
 		Matcher m = p.matcher(contentString);
-		List<WxMsgContentItem> list = new ArrayList<WxMsgContentItem>();
+		List<WxMsgHtmlContent> list = new ArrayList<WxMsgHtmlContent>();
 		while(m.find()){
-			WxMsgContentItem item = new WxMsgContentItem();
-			item.setTxtContentHtmlString( m.group(1));
+			WxMsgHtmlContent item = new WxMsgHtmlContent();
+			item.setTxtContentHtmlString( m.group(1).replace("\\\\\\", ""));
+			logger.info("Begin to analyze the html...");
+			item.setTxtContent(getWxMsgContentItem(item.getTxtContentHtmlString()));
+			logger.info("Analyze the html successfully.");
+			list.add(item);
 		}
 		
-		for(WxMsgContentItem item : list){
+		for(WxMsgHtmlContent item : list){
 			contentString = contentString.replace(item.getTxtContentHtmlString(), "");
 		}
 		
+		contentString = contentString.replace("\\\\\\\"", "\\\\\\#");
 		
+		List<String> valueStrings = getValue("^.*\"Title\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+		int idx = 0;
+		for( String value: valueStrings){
+			WxMsgHtmlContent item = list.get(idx++);
+			item.setTitle(value.replace("\\\\\\#", "\""));
+		}
+		valueStrings = getValue("^.*\"Abstract\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+		idx = 0;
+		for( String value: valueStrings){
+			WxMsgHtmlContent item = list.get(idx++);
+			item.setAbstract(value.replace("\\\\\\#", "\""));
+		}
+		valueStrings = getValue("^.*\"ArticleUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+		idx = 0;
+		for( String value: valueStrings){
+			WxMsgHtmlContent item = list.get(idx++);
+			item.setArticleUrl(value.replace("\\\\\\#", "\""));
+		}
+		valueStrings = getValue("^.*\"MediaUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+		idx = 0;
+		for( String value: valueStrings){
+			WxMsgHtmlContent item = list.get(idx++);
+			item.setMediaUrl(value.replace("\\\\\\#", "\""));
+		}
+		valueStrings = getValue("^.*\"TxtFile\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+		idx = 0;
+		for( String value: valueStrings){
+			WxMsgHtmlContent item = list.get(idx++);
+			item.setTxtFile(value);
+		}
+		
+		return list;
 	}
 	
-	
+	/**
+	 * 用于解析html文本
+	 * @param html
+	 * @return
+	 */
+	protected abstract WxMsgHtmlContentItem getWxMsgContentItem(String html);
 	
 	/**
 	 * 使用正则表达是解析字串
@@ -133,8 +193,22 @@ public abstract class WXParser {
 		Matcher m = p.matcher(line);
 		List<String> list = new ArrayList<String>();
 		while( m.find() )
-			list.add( m.group(1));
+			list.add( m.group(1).trim());
 		return list;
+	}
+	
+	
+	public static void main(String []args) throws IOException{
+		WXParser wxParser = new WXParserHtmlCleaner("C:/Users/Administrator/Desktop/仲由Run/data/pa00", "utf-8");
+		wxParser.init();
+		WxMsgItem item = null;
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter
+				(new FileOutputStream("C:/Users/Administrator/Desktop/仲由Run/data/pa00.trans"),"utf-8"));
+		while( ( item = wxParser.getNextWxMsgItem())!= null ){
+			writer.append(item.toDocument());
+		}
+
+		writer.close();
 	}
 	
 }

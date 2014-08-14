@@ -55,7 +55,7 @@ public class FileReader {
 	}
 	
 	public String getNextLine() throws IOException{
-		if( reader != null )
+		if( reader == null )
 			this.openStream();
 		return reader.readLine();
 	}
