@@ -51,6 +51,10 @@ public abstract class WXParser {
 		this.charset = charset;
 	}
 	
+	protected WXParser() {
+		
+	}
+	
 	public boolean init(){
 		reader = new FileReader(wxMsgFilePath,charset);
 		try {
@@ -114,7 +118,12 @@ public abstract class WXParser {
 		if(msgType == 1){
 			line = line.replace("\\\\\\", "");
 			WxMsgTextItem txtItem = new WxMsgTextItem();
-			txtItem.setContent( getValue("^.*\"TxtContent\"\\s*:\\s*\"([^\"]*)\".*$", line).get(0));
+			List<String> list = getValue("^.*\"TxtContent\"\\s*:\\s*\"([^\"]*)\".*$", line);
+			if( list == null || list.size() == 0)
+				txtItem.setContent( "" );
+			else {
+				txtItem.setContent(list.get(0));
+			}
 			item = txtItem;
 		}else{// if(msgType == 49){
 			lidx = line.indexOf("[");
@@ -129,9 +138,17 @@ public abstract class WXParser {
 			htmlItem.setContent( list);
 			item = htmlItem;
 		}
+		List<String> list = getValue("^.*\"WxId\"\\s*:\\s*\"([^\"]*)\".*$", line);
+		if( list == null || list.size() == 0)
+			item.setWxId( "");
+		else
+			item.setWxId( list.get(0));
 		
-		item.setWxId( getValue("^.*\"WxId\"\\s*:\\s*\"([^\"]*)\".*$", line).get(0));
-		item.setSendTime( Long.parseLong( getValue("^.*\"SendTime\".*([0-9]+).*$", line).get(0)));
+		list = getValue("^.*\"SendTime\".*([0-9]+).*$", line);
+		if( list == null || list.size() == 0)
+			item.setSendTime(0);
+		else
+			item.setSendTime( Long.parseLong( list.get(0)));
 //		item.setFansCount( Integer.parseInt( getValue("^.*\"FansCount\".*([0-9]+).*$", line).get(0)));
 		item.setMsgType( msgType);
 		
@@ -143,61 +160,66 @@ public abstract class WXParser {
 	 * @param contentString
 	 * @return
 	 */
-	protected List<WxMsgHtmlItemContent> getMsgContent(String contentString){
+	protected List<WxMsgHtmlItemContent> getMsgContent(String content){
 		
-		String htmlRegex = ".*\"TxtContent\":\"(.*<html.*</html\\s*>)\\s*\".*";
 		
-		Pattern p = Pattern.compile(htmlRegex);
-		Matcher m = p.matcher(contentString);
-		List<WxMsgHtmlItemContent> list = new ArrayList<WxMsgHtmlItemContent>();
-		while(m.find()){
-			WxMsgHtmlItemContent item = new WxMsgHtmlItemContent();
-			item.setTxtContentHtmlString( m.group(1).replace("\\\\\\", ""));
-			logger.info("Begin to analyze the html...");
-			item.setTxtContent(getWxMsgContentItem(item.getTxtContentHtmlString()));
-			logger.info("Analyze the html successfully.");
-			list.add(item);
+		List<String> contentStringList = splitContentString(content);
+		
+		List<WxMsgHtmlItemContent> retList = new ArrayList<WxMsgHtmlItemContent>();
+		for( String contentString : contentStringList)
+		{
+			List<String> list = getValue(".*\"TxtContent\":\"(.*<html.*</html\\s*>)\\s*\".*", contentString);
+			if(list == null || list.size() == 0){
+				continue;
+			}else{
+				WxMsgHtmlItemContent item = new WxMsgHtmlItemContent();
+				item.setTxtContentHtmlString( list.get(0).replace("\\\\\\", ""));
+				logger.info("Begin to analyze the html...");
+				item.setTxtContent(getWxMsgContentItem(item.getTxtContentHtmlString()));
+				logger.info("Analyze the html successfully.");
+				retList.add(item);
+				contentString = contentString.replace(item.getTxtContentHtmlString(), "");
+				contentString = contentString.replace("\\\\\\\"", "\\\\\\#");
+				list = getValue("^.*\"Title\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+				if(list == null || list.size() == 0){
+					item.setTitle("");
+				}else{
+					item.setTitle(list.get(0).replace("\\\\\\#", "\""));
+				}
+				list = getValue("^.*\"Abstract\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+				if( list == null || list.size() == 0){
+					item.setAbstract("");
+				}else{
+					item.setAbstract(list.get(0).replace("\\\\\\#", "\""));
+				}
+				list = getValue("^.*\"ArticleUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+				if( list == null || list.size() == 0){
+					item.setArticleUrl("");
+				}else{
+					item.setArticleUrl(list.get(0).replace("\\\\\\#", "\""));
+				}
+				list = getValue("^.*\"MediaUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+				if( list == null || list.size() == 0){
+					item.setMediaUrl("");
+				}else{
+					item.setMediaUrl(list.get(0).replace("\\\\\\#", "\""));
+				}
+				list = getValue("^.*\"TxtFile\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
+				
+				if( list == null || list.size() == 0){
+					item.setTxtFile("");
+				}else{
+					item.setTxtFile(list.get(0).replace("\\\\\\#", "\""));
+				}
+			}
+			
+			
 		}
 		
-		for(WxMsgHtmlItemContent item : list){
-			contentString = contentString.replace(item.getTxtContentHtmlString(), "");
-		}
-		
-		contentString = contentString.replace("\\\\\\\"", "\\\\\\#");
-		
-		List<String> valueStrings = getValue("^.*\"Title\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
-		int idx = 0;
-		for( String value: valueStrings){
-			WxMsgHtmlItemContent item = list.get(idx++);
-			item.setTitle(value.replace("\\\\\\#", "\""));
-		}
-		valueStrings = getValue("^.*\"Abstract\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
-		idx = 0;
-		for( String value: valueStrings){
-			WxMsgHtmlItemContent item = list.get(idx++);
-			item.setAbstract(value.replace("\\\\\\#", "\""));
-		}
-		valueStrings = getValue("^.*\"ArticleUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
-		idx = 0;
-		for( String value: valueStrings){
-			WxMsgHtmlItemContent item = list.get(idx++);
-			item.setArticleUrl(value.replace("\\\\\\#", "\""));
-		}
-		valueStrings = getValue("^.*\"MediaUrl\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
-		idx = 0;
-		for( String value: valueStrings){
-			WxMsgHtmlItemContent item = list.get(idx++);
-			item.setMediaUrl(value.replace("\\\\\\#", "\""));
-		}
-		valueStrings = getValue("^.*\"TxtFile\"\\s*:\\s*\"([^\"]*)\".*$", contentString);
-		idx = 0;
-		for( String value: valueStrings){
-			WxMsgHtmlItemContent item = list.get(idx++);
-			item.setTxtFile(value);
-		}
-		
-		return list;
+		return retList;
 	}
+	
+	
 	
 	/**
 	 * 用于解析html文本
@@ -216,12 +238,34 @@ public abstract class WXParser {
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(line);
 		List<String> list = new ArrayList<String>();
-		while( m.find() )
+		if( m.find() )
 			list.add( m.group(1).trim());
 		return list;
 	}
 	
-	
+	private List<String> splitContentString(String contentString){
+		int lastBraceIdx = contentString.lastIndexOf('}');
+		
+		int idx = contentString.indexOf("\"TxtContent\":\"");
+		int lidx = contentString.lastIndexOf('{',idx);
+		int ridx;
+		List<String> retList = new ArrayList<String>();
+		while( idx > 0 ){
+			idx  = contentString.indexOf("\"TxtContent\":\"",idx + 1);
+			if( idx > 0){
+				ridx = contentString.lastIndexOf('}',idx);
+				String tmp =  contentString.substring(lidx,ridx+1);
+				retList.add(tmp);
+				lidx = contentString.lastIndexOf('{',idx);
+			}else{
+				ridx = lastBraceIdx;
+				String tmp =  contentString.substring(lidx,ridx+1);
+				retList.add(tmp);
+			}
+			
+		}
+		return retList;
+	}
 
 	
 }

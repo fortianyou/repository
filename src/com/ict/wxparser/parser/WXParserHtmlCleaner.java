@@ -1,15 +1,10 @@
 package com.ict.wxparser.parser;
 
-import java.io.IOException;
-import java.util.List;
-
-import javax.swing.text.html.parser.TagElement;
-
 import org.apache.log4j.Logger;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
-import com.ict.wxparser.util.FileReader;
+import com.ict.wxparser.util.StringUtils;
 import com.ict.wxparser.wxmsg.WxMsgHtmlItemContentItem;
 /**
  * 采用HtmlCleaner的微信内容解析器
@@ -29,6 +24,9 @@ public class WXParserHtmlCleaner extends WXParser{
 		super(_wxMsgFilePath, charset);
 	}
 
+	public WXParserHtmlCleaner(){
+		super();
+	}
 	@Override
 	protected  WxMsgHtmlItemContentItem getWxMsgContentItem(String html) {
 		WxMsgHtmlItemContentItem item = new WxMsgHtmlItemContentItem();
@@ -49,7 +47,7 @@ public class WXParserHtmlCleaner extends WXParser{
 			contentString = (node.getText()).toString();
 		}
 		
-		item.setContentString(contentString);
+		item.setContentString(StringUtils.decodeString(contentString));
 		
 		nodes = dom.getElementsByAttValue("id","activity-name", true, true);
 		String str = null;
@@ -58,7 +56,7 @@ public class WXParserHtmlCleaner extends WXParser{
 		}else{
 			TagNode node = nodes[0];
 			str = (node.getText()).toString().trim();
-			item.setTitleString(str);
+			item.setTitleString(StringUtils.decodeString(str));
 		}
 		
 		nodes = dom.getElementsByAttValue("id","post-date", true, true);
@@ -85,21 +83,22 @@ public class WXParserHtmlCleaner extends WXParser{
 		return item;
 	}
 	
-	protected static  String getWxMsgContentString(String html) {
-		TagNode dom = cleaner.clean(html);
-		TagNode [] nodes = dom.getElementsByAttValue("id","page-content", true, true);
-		TagNode rootNode = nodes[0];
-		nodes = dom.getElementsByAttValue("id","js_content", true, true);
-		String titleString = null;
-		if( nodes == null || nodes.length == 0){
-			titleString = (rootNode.getText()).toString();
-		}else {
-			TagNode node = nodes[0];
-			titleString = (node.getText()).toString();
-		}
-		
-		return titleString.trim();
-	}
+//	protected static  String getWxMsgContentString(String html) {
+//		TagNode dom = cleaner.clean(html);
+//		TagNode [] nodes = dom.getElementsByAttValue("id","page-content", true, true);
+//		TagNode rootNode = nodes[0];
+//		nodes = dom.getElementsByAttValue("id","js_content", true, true);
+//		String titleString = null;
+//		if( nodes == null || nodes.length == 0){
+//			
+//			titleString = (rootNode.getText()).toString();
+//		}else {
+//			TagNode node = nodes[0];
+//			titleString = (node.getText()).toString();
+//		}
+//		
+//		return titleString.trim();
+//	}
 	
 	
 
